@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 · 化工厂区智能安全巡检平台</title>
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+
+<body>
+  <div class="bg-scene"><i class="orb a"></i><i class="orb b"></i></div>
+
+  <div class="login-wrap">
+    <form class="login-card" id="login-form" autocomplete="off">
+      <div class="login-logo">🛡</div>
+      <div class="login-title">化工厂区智能安全巡检平台</div>
+      <div class="login-sub"></div>
+
+      <div class="field">
+        <label for="username">用户名</label>
+        <span class="fi-ico">👤</span>
+        <input type="text" id="username" placeholder="请输入用户名" value="admin" />
+      </div>
+      <div class="field">
+        <label for="password">密码</label>
+        <span class="fi-ico">🔒</span>
+        <input type="password" id="password" placeholder="请输入密码" />
+      </div>
+
+      <div class="login-row">
+        <label><input type="checkbox" id="remember" /> 记住登录状态</label>
+        <a href="#" onclick="return false">忘记密码?</a>
+      </div>
+
+      <button type="submit" class="btn-login">登 录</button>
+      <div class="login-err" id="login-err"></div>
+
+    </form>
+  </div>
+
+  <div class="login-foot">© 2026 智能安全巡检平台 · 数字孪生可视化系统</div>
+
+  <script>
+    (function () {
+      const form = document.getElementById('login-form');
+      const err = document.getElementById('login-err');
+
+      // 已登录则直接进大屏
+      try { if (sessionStorage.getItem('twin_auth') === '1') location.replace('index.html'); } catch (e) { }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const u = document.getElementById('username').value.trim();
+        const p = document.getElementById('password').value;
+        // 仅"有登录的样子":用户名非空即可,密码不校验内容(演示用)
+        if (!u) { err.textContent = '请输入用户名'; return; }
+        if (!p) { err.textContent = '请输入密码'; return; }
+        err.textContent = '';
+        try {
+          sessionStorage.setItem('twin_auth', '1');
+          sessionStorage.setItem('twin_user', u);
+          if (document.getElementById('remember').checked) {
+            localStorage.setItem('twin_remember_user', u);
+          }
+        } catch (_) { }
+        // 进入大屏
+        const btn = form.querySelector('.btn-login');
+        btn.textContent = '登录中…';
+        setTimeout(() => location.replace('index.html'), 400);
+      });
+
+      // 回填记住的用户名
+      try {
+        const ru = localStorage.getItem('twin_remember_user');
+        if (ru) { document.getElementById('username').value = ru; document.getElementById('remember').checked = true; }
+      } catch (_) { }
+    })();
+  </script>
+</body>
+
+</html>

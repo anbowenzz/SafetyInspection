@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据管理后台 · 化工厂区智能安全巡检平台</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <!-- 登录守卫:未登录跳回登录页 -->
+  <script>
+    (function () {
+      try { if (sessionStorage.getItem('twin_auth') !== '1') location.replace('login.html'); } catch (e) { }
+    })();
+  </script>
+</head>
+
+<body class="admin-body">
+  <div class="bg-scene"><i class="orb a"></i><i class="orb b"></i></div>
+
+  <!-- 顶栏 -->
+  <header class="admin-top">
+    <span class="at-logo">🛡</span>
+    <span class="at-title">数据管理后台</span>
+    <span class="at-tag">DATA CONSOLE</span>
+    <div class="at-right">
+      <span class="at-user">操作员:<b id="cur-user">admin</b></span>
+      <a class="at-btn" href="index.html" title="返回可视化大屏">🖥 返回大屏</a>
+      <button class="at-btn primary" id="btn-save">💾 保存并应用</button>
+      <button class="at-btn danger" id="btn-reset">↺ 恢复默认</button>
+      <button class="at-btn danger" id="btn-logout">⏻ 退出</button>
+    </div>
+  </header>
+
+  <div class="admin-main">
+    <!-- 侧边导航 -->
+    <nav class="admin-nav" id="admin-nav">
+      <div class="nav-sep">数据配置</div>
+      <div class="nav-item active" data-view="overview"><span class="ni-ico">📊</span>数据概览</div>
+      <div class="nav-item" data-view="hotspots"><span class="ni-ico">📍</span>监测点位</div>
+      <div class="nav-item" data-view="kpi"><span class="ni-ico">🎯</span>安全态势 KPI</div>
+      <div class="nav-item" data-view="center"><span class="ni-ico">🛰</span>设备总览</div>
+      <div class="nav-item" data-view="patrols"><span class="ni-ico">🤖</span>巡检任务</div>
+      <div class="nav-item" data-view="risk"><span class="ni-ico">⚠</span>风险分布</div>
+      <div class="nav-item" data-view="device"><span class="ni-ico">🔌</span>设备运行状态</div>
+    </nav>
+
+    <!-- 内容区 -->
+    <main class="admin-content" id="admin-content">
+
+      <!-- 概览 -->
+      <section class="view active" data-view="overview">
+        <div class="view-hd"><i class="vh-bar"></i>
+          <h2>数据概览</h2>
+        </div>
+        <p class="view-desc">当前大屏使用的数据快照。修改各模块后点击右上角「保存并应用」,返回大屏即可生效。</p>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>核心指标</div>
+          <div class="stat-grid" id="overview-stats"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>数据规模</div>
+          <div class="stat-grid" id="overview-counts"></div>
+        </div>
+      </section>
+
+      <!-- 监测点位 -->
+      <section class="view" data-view="hotspots">
+        <div class="view-hd"><i class="vh-bar"></i>
+          <h2>监测点位 / 三维标记</h2>
+        </div>
+        <p class="view-desc">大屏三维场景中的热点标记。类型决定图标颜色与详情字段;勾选「告警」会以红色高亮显示。</p>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>点位清单<span class="ch-act"><button class="mini-btn add"
+                id="add-hotspot">+ 新增点位</button></span></div>
+          <div class="tbl-wrap">
+            <table class="tbl" id="tbl-hotspots">
+              <thead>
+                <tr>
+                  <th class="cell-narrow">编号</th>
+                  <th class="cell-narrow">类型</th>
+                  <th>名称</th>
+                  <th class="cell-narrow">读数 / 状态</th>
+                  <th class="cell-mini">告警</th>
+                  <th class="cell-mini">操作</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI -->
+      <section class="view" data-view="kpi">
+        <div class="view-hd"><i class="vh-bar"></i>
+          <h2>园区安全态势 KPI</h2>
+        </div>
+        <p class="view-desc">大屏左上角「园区安全态势」四项核心指标的初始值(在线率与评分运行时会小幅波动)。</p>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>指标设置</div>
+          <div class="form-grid" id="form-kpi"></div>
+        </div>
+      </section>
+
+      <!-- 设备总览 -->
+      <section class="view" data-view="center">
+        <div class="view-hd"><i class="vh-bar"></i>
+          <h2>接入设备总览</h2>
+        </div>
+        <p class="view-desc">大屏中部统计条展示的设备接入规模。</p>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>设备数量</div>
+          <div class="form-grid" id="form-center"></div>
+        </div>
+      </section>
+
+      <!-- 巡检任务 -->
+      <section class="view" data-view="patrols">
+        <div class="view-hd"><i class="vh-bar"></i>
+          <h2>巡检任务</h2>
+        </div>
+        <p class="view-desc">大屏「实时巡检任务」列表的任务来源。进度与状态由系统实时模拟推进。</p>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>任务清单<span class="ch-act"><button class="mini-btn add"
+                id="add-patrol">+ 新增任务</button></span></div>
+          <div class="tbl-wrap">
+            <table class="tbl" id="tbl-patrols">
+              <thead>
+                <tr>
+                  <th class="cell-mini">序号</th>
+                  <th>任务名称</th>
+                  <th class="cell-narrow">所属区域</th>
+                  <th class="cell-mini">操作</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 风险分布 -->
+      <section class="view" data-view="risk">
+        <div class="view-hd"><i class="vh-bar"></i>
+          <h2>风险等级分布</h2>
+        </div>
+        <p class="view-desc">大屏右下角「风险等级分布」各等级的项目数量。</p>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>等级数量</div>
+          <div class="tbl-wrap">
+            <table class="tbl" id="tbl-risk">
+              <thead>
+                <tr>
+                  <th>风险等级</th>
+                  <th class="cell-narrow">项目数</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 设备运行状态 -->
+      <section class="view" data-view="device">
+        <div class="view-hd"><i class="vh-bar"></i>
+          <h2>巡检设备运行状态</h2>
+        </div>
+        <p class="view-desc">大屏左下角「设备运行状态」环形图的在线 / 告警 / 离线数量。</p>
+        <div class="card">
+          <div class="card-hd"><i class="ch-bar"></i>状态数量</div>
+          <div class="tbl-wrap">
+            <table class="tbl" id="tbl-device">
+              <thead>
+                <tr>
+                  <th>状态</th>
+                  <th class="cell-narrow">设备数</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="js/store.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+
+</html>

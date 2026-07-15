@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>化工厂区智能安全巡检平台</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- 登录守卫:未登录则跳转登录页(仅"有登录的样子",不污染大屏) -->
+  <script>
+    (function(){
+      try{
+        if(sessionStorage.getItem('twin_auth') !== '1'){
+          location.replace('login.html');
+        }
+      }catch(e){ /* 隐私模式等异常时不拦截 */ }
+    })();
+  </script>
+</head>
+<body>
+  <!-- 加载遮罩 -->
+  <div id="loading-mask">
+    <div class="loading-box">
+      <div class="loading-ring"></div>
+      <div class="loading-title">化工厂区智能安全巡检平台</div>
+      <div class="loading-sub">数字孪生三维场景加载中</div>
+      <div class="loading-bar"><i id="loading-bar-inner"></i></div>
+      <div class="loading-pct"><span id="loading-pct">0</span>%</div>
+      <div class="loading-tip" id="loading-tip">正在初始化三维引擎…</div>
+    </div>
+  </div>
+
+  <!-- 3D 场景容器 -->
+  <div id="scene-container"></div>
+  <!-- 3D 热点标签层 -->
+  <div id="hotspot-layer"></div>
+  <!-- 巡检机器人跟随标签 -->
+  <div id="patrol-bot-label"><i class="pbl-dot"></i>巡检机器人 RB-01<b>巡检中</b></div>
+  <!-- 大屏主体 -->
+  <div id="dashboard">
+    <!-- 顶部标题栏 -->
+    <header id="topbar">
+      <div class="topbar-side left">
+        <span class="sys-tag">SAFETY · DIGITAL TWIN</span>
+        <span class="sys-date" id="sys-date">--</span>
+      </div>
+      <h1 class="topbar-title">
+        <span class="title-main">化工厂区智能安全巡检平台</span>
+        <span class="title-en">CHEMICAL PLANT INTELLIGENT SAFETY INSPECTION PLATFORM</span>
+      </h1>
+      <div class="topbar-side right">
+        <span class="sys-clock" id="sys-clock">--:--:--</span>
+        <span class="run-state"><i class="dot"></i>系统运行中</span>
+        <a class="topbar-link" href="admin.html" title="数据管理后台">⚙ 管理后台</a>
+        <a class="topbar-link" href="#" id="btn-logout" title="退出登录">⏻ 退出</a>
+      </div>
+    </header>
+
+    <!-- 主体三栏 -->
+    <div id="main">
+      <!-- 左列 -->
+      <section class="col col-left">
+        <div class="panel" id="panel-overview">
+          <div class="panel-hd"><span class="bar"></span>园区安全态势<span class="panel-en">OVERVIEW</span></div>
+          <div class="panel-bd">
+            <div class="kpi-grid" id="kpi-grid"></div>
+          </div>
+        </div>
+        <div class="panel" id="panel-gas">
+          <div class="panel-hd"><span class="bar"></span>有毒有害气体监测<span class="panel-en">GAS MONITOR</span></div>
+          <div class="panel-bd"><div class="chart" id="chart-gas"></div></div>
+        </div>
+        <div class="panel" id="panel-device">
+          <div class="panel-hd"><span class="bar"></span>巡检设备运行状态<span class="panel-en">DEVICE STATUS</span></div>
+          <div class="panel-bd"><div class="chart" id="chart-device"></div></div>
+        </div>
+      </section>
+
+      <!-- 中列 -->
+      <section class="col col-center">
+        <div class="center-top" id="center-top">
+          <div class="cstat" id="cstat"></div>
+        </div>
+        <div class="center-toolbar" id="center-toolbar">
+          <button class="tool-btn active" data-view="overview">全景视角</button>
+          <button class="tool-btn" data-view="patrol">巡检路线</button>
+          <button class="tool-btn" data-toggle="autorotate">自动旋转</button>
+          <button class="tool-btn" data-toggle="hotspots">隐藏标记</button>
+          <button class="tool-btn" data-action="reset">复位</button>
+        </div>
+        <div class="center-bottom" id="center-bottom">
+          <div id="compass">
+            <div class="compass-ring">
+              <div class="compass-n">N</div>
+              <div class="compass-s">S</div>
+              <div class="compass-e">E</div>
+              <div class="compass-w">W</div>
+            </div>
+            <div id="compass-pointer" class="compass-pointer"></div>
+          </div>
+          <div class="panel panel-flat" id="panel-patrol">
+            <div class="panel-hd"><span class="bar"></span>实时巡检任务<span class="panel-en">LIVE TASK</span><i class="panel-toggle" id="patrol-toggle" title="收起 / 展开">▾</i></div>
+            <div class="panel-bd"><div class="patrol-list" id="patrol-list"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右列 -->
+      <section class="col col-right">
+        <div class="panel" id="panel-alarm">
+          <div class="panel-hd"><span class="bar"></span>实时告警动态<span class="panel-en">ALARM</span></div>
+          <div class="panel-bd"><div class="alarm-list" id="alarm-list"></div></div>
+        </div>
+        <div class="panel" id="panel-trend">
+          <div class="panel-hd"><span class="bar"></span>告警趋势分析<span class="panel-en">TREND</span></div>
+          <div class="panel-bd"><div class="chart" id="chart-trend"></div></div>
+        </div>
+        <div class="panel" id="panel-risk">
+          <div class="panel-hd"><span class="bar"></span>风险等级分布<span class="panel-en">RISK LEVEL</span></div>
+          <div class="panel-bd"><div class="chart" id="chart-risk"></div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 设备信息弹窗 -->
+  <div id="device-popup" class="device-popup hidden">
+    <div class="dp-hd"><span id="dp-title">设备信息</span><i class="dp-close" id="dp-close">×</i></div>
+    <div class="dp-bd" id="dp-body"></div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./libs/three.module.js",
+      "three/addons/": "./libs/jsm/"
+    }
+  }
+  </script>
+  <script src="libs/echarts.min.js"></script>
+  <script src="js/store.js"></script>
+  <script type="module" src="js/scene.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
